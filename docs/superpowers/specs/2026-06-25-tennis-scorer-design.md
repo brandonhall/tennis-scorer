@@ -55,7 +55,7 @@ edge cases).
 MatchFormat(
   setsToWin: Int,          // 1 = a single set decides the match (pro set)
   gamesToWinSet: Int,      // 8 for a pro set; 6 for a standard set
-  winByTwoGames: Boolean,  // true
+  winByTwoGames: Boolean,  // 2-game margin to win a set? false for the pro-set default
   tiebreakAtGames: Int?,   // 7 -> tiebreak at 7-7; null -> advantage set (no tiebreak)
   tiebreakPoints: Int,     // 7
   noAd: Boolean,           // true = no-ad (deciding point at deuce)
@@ -64,13 +64,16 @@ MatchFormat(
 ```
 
 **Default preset = the user's format ("Pro set · no-ad"):**
-`setsToWin = 1`, `gamesToWinSet = 8`, `winByTwoGames = true`,
+`setsToWin = 1`, `gamesToWinSet = 8`, `winByTwoGames = false`,
 `tiebreakAtGames = 7`, `tiebreakPoints = 7`, `noAd = true`.
-Resulting set ends 8–6 (or better) outright, or 8–7 via the tiebreak.
+Games are first-to-8 with no two-game-margin requirement; the only win-by-two is
+the tiebreak. Because the tiebreak triggers at 7–7, the set ends 8–6 (or better)
+outright, or 8–7 through the tiebreak.
 
 **Shipped presets** (selectable in setup; default is first):
 
-1. **Pro set · no-ad** (default) — to 8 by two, 7-point tiebreak at 7–7, no-ad.
+1. **Pro set · no-ad** (default) — first to 8 games (no two-game margin),
+   7-point tiebreak (win by two) at 7–7, no-ad games.
 2. **Best of 3, full sets** — sets to 6 by two, 7-point tiebreak at 6–6, ad,
    full third set.
 3. **Best of 3, 10-pt 3rd** — as above, but the deciding set is a 10-point
@@ -96,8 +99,10 @@ Resulting set ends 8–6 (or better) outright, or 8–7 via the tiebreak.
 ### 3.3 Games & sets
 
 - Win a game → increment that player's games in the current set.
-- Win the set at `gamesToWinSet` with a two-game margin, or by winning the
-  tiebreak at the tie threshold.
+- Win the set at `gamesToWinSet`, requiring a two-game margin only when
+  `winByTwoGames` is set (standard sets), or by winning the tiebreak at the tie
+  threshold. The pro-set default has no game-margin rule; a 7–7 tie goes straight
+  to the tiebreak.
 - Win the match at `setsToWin` sets. For the user's default (`setsToWin = 1`),
   the single pro set ends the match.
 
@@ -207,7 +212,8 @@ button tap
   - Standard game progression 0 → 15 → 30 → 40 → game.
   - Ad deuce/advantage battles, including lost-advantage back to deuce.
   - No-ad deciding point at 3–3.
-  - Game win-by-two and set logic.
+  - Set-win logic for both win-by-two formats (standard set ending 7–5) and
+    no-margin formats (the pro set to 8).
   - Reaching 7–7 → tiebreak; tiebreak to 7 win-by-two including 7–6 (continue)
     and 8–6 (win); set credited 8–7.
   - Tiebreak serve rotation (1 then alternating 2s).

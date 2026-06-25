@@ -7,7 +7,7 @@ persistent, interactive notification.
 
 Single match at a time, no accounts, no cloud, live scoring only.
 
-Default format: no-ad pro set (first to 8 games by two, 7-point tiebreak at 7–7).
+Default format: no-ad pro set (first to 8 games, 7-point tiebreak at 7–7).
 Other formats are selectable per match.
 
 ## Status
