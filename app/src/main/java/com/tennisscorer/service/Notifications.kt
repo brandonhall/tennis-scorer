@@ -53,6 +53,8 @@ object Notifications {
             .setSilent(true)
             .setContentIntent(openApp(context))
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setColor(0xFF0D0F0E.toInt())
+            .setColorized(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
 
         if (sb.winner == null) {
