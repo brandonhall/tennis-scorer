@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import com.tennisscorer.match.MatchRepository
+import com.tennisscorer.ui.ThemePrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,6 +30,7 @@ class ScoringService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         MatchRepository.init(this)
+        ThemePrefs.init(this)
         Notifications.ensureChannel(this)
 
         val state = MatchRepository.state.value
@@ -62,6 +64,14 @@ class ScoringService : Service() {
                     getSystemService(NotificationManager::class.java)
                         .notify(Notifications.NOTIF_ID, notif)
                 }
+            }
+        }
+        scope.launch {
+            ThemePrefs.mode.collect {
+                val s = MatchRepository.state.value ?: return@collect
+                val notif = Notifications.build(this@ScoringService, s, MatchRepository.scoreboardOf(s))
+                getSystemService(NotificationManager::class.java)
+                    .notify(Notifications.NOTIF_ID, notif)
             }
         }
     }

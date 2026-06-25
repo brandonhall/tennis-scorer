@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.tennisscorer.MainActivity
@@ -14,6 +15,8 @@ import com.tennisscorer.core.Phase
 import com.tennisscorer.core.Player
 import com.tennisscorer.core.Scoreboard
 import com.tennisscorer.match.MatchState
+import com.tennisscorer.ui.ThemeMode
+import com.tennisscorer.ui.ThemePrefs
 
 /** Maps a [Scoreboard] into the ongoing, interactive notification. */
 object Notifications {
@@ -42,6 +45,8 @@ object Notifications {
     fun build(context: Context, state: MatchState, sb: Scoreboard): Notification {
         val p1 = state.p1Name.ifBlank { "Player 1" }
         val p2 = state.p2Name.ifBlank { "Player 2" }
+        ThemePrefs.init(context)
+        val bg = if (resolveDark(context)) 0xFF0D0F0E.toInt() else 0xFFEAEEDC.toInt()
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_score)
@@ -53,7 +58,7 @@ object Notifications {
             .setSilent(true)
             .setContentIntent(openApp(context))
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setColor(0xFF0D0F0E.toInt())
+            .setColor(bg)
             .setColorized(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
 
@@ -65,6 +70,14 @@ object Notifications {
             builder.addAction(0, "New match", openApp(context))
         }
         return builder.build()
+    }
+
+    private fun resolveDark(context: Context): Boolean = when (ThemePrefs.mode.value) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.SYSTEM ->
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
     }
 
     private fun shortName(n: String): String = if (n.length <= 8) n else n.take(7) + "…"
