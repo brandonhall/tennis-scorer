@@ -20,6 +20,10 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            // Signed with the stable debug key so personal sideload installs/updates
+            // cleanly without managing a separate keystore. Swap to a real release key
+            // if this ever goes to the Play Store.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
