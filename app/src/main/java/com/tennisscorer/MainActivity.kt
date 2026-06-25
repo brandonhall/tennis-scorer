@@ -60,6 +60,9 @@ import com.tennisscorer.match.Formats
 import com.tennisscorer.match.MatchRepository
 import com.tennisscorer.match.MatchState
 import com.tennisscorer.service.ScoringService
+import com.tennisscorer.ui.LocalTennisColors
+import com.tennisscorer.ui.ThemeMode
+import com.tennisscorer.ui.ThemePrefs
 import com.tennisscorer.ui.TennisScorerTheme
 
 class MainActivity : ComponentActivity() {
@@ -70,10 +73,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MatchRepository.init(this)
+        ThemePrefs.init(this)
         maybeRequestNotifPermission()
 
         setContent {
-            TennisScorerTheme {
+            val mode by ThemePrefs.mode.collectAsState()
+            TennisScorerTheme(mode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
@@ -127,7 +132,7 @@ private fun SetupScreen(onStart: (MatchState) -> Unit) {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ThemeSwitch() }
         Text(
             "New match",
             color = MaterialTheme.colorScheme.onBackground,
@@ -174,7 +179,7 @@ private fun LiveScreen(
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
     ) {
-        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ThemeSwitch() }
         Text("$p1 vs $p2", color = cs.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Row(modifier = Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(Formats.byKey(state.formatKey).label, color = cs.onSurfaceVariant, fontSize = 13.sp)
@@ -232,6 +237,7 @@ private fun ScoreCard(p1: String, p2: String, sb: Scoreboard) {
 @Composable
 private fun ScoreRow(name: String, games: Int, points: String, serving: Boolean) {
     val cs = MaterialTheme.colorScheme
+    val accent = LocalTennisColors.current.accent
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -240,22 +246,23 @@ private fun ScoreRow(name: String, games: Int, points: String, serving: Boolean)
             Modifier
                 .size(10.dp)
                 .clip(CircleShape)
-                .background(if (serving) cs.primary else Color.Transparent),
+                .background(if (serving) accent else Color.Transparent),
         )
         Spacer(Modifier.width(12.dp))
         Text(name, color = cs.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
         Text("$games", color = cs.onSurfaceVariant, fontSize = 22.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(40.dp), textAlign = TextAlign.Center)
-        Text(points, color = if (serving) cs.primary else cs.onBackground, fontSize = 40.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(74.dp), textAlign = TextAlign.End)
+        Text(points, color = if (serving) accent else cs.onBackground, fontSize = 40.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(74.dp), textAlign = TextAlign.End)
     }
 }
 
 @Composable
 private fun WonBlock(winnerName: String, sb: Scoreboard, onEnd: () -> Unit) {
     val cs = MaterialTheme.colorScheme
+    val accent = LocalTennisColors.current.accent
     Column(Modifier.fillMaxWidth()) {
         Text("Game, set, match", color = cs.onSurfaceVariant, fontSize = 14.sp)
         Spacer(Modifier.height(10.dp))
-        Text(winnerName, color = cs.primary, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+        Text(winnerName, color = accent, fontSize = 40.sp, fontWeight = FontWeight.Bold)
         Text("wins", color = cs.onBackground, fontSize = 20.sp)
         Spacer(Modifier.height(18.dp))
         Text(
@@ -299,6 +306,7 @@ private fun GhostButton(text: String, modifier: Modifier, onClick: () -> Unit) {
 @Composable
 private fun Field(label: String, value: String, onChange: (String) -> Unit) {
     val cs = MaterialTheme.colorScheme
+    val accent = LocalTennisColors.current.accent
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -307,11 +315,11 @@ private fun Field(label: String, value: String, onChange: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = cs.primary,
+            focusedBorderColor = accent,
             unfocusedBorderColor = cs.outline,
-            focusedLabelColor = cs.primary,
+            focusedLabelColor = accent,
             unfocusedLabelColor = cs.onSurfaceVariant,
-            cursorColor = cs.primary,
+            cursorColor = accent,
             focusedTextColor = cs.onBackground,
             unfocusedTextColor = cs.onBackground,
         ),
@@ -344,6 +352,7 @@ private fun ServeChip(text: String, selected: Boolean, onClick: () -> Unit) {
 @Composable
 private fun FormatPicker(selectedKey: String, onSelect: (String) -> Unit) {
     val cs = MaterialTheme.colorScheme
+    val accent = LocalTennisColors.current.accent
     var expanded by remember { mutableStateOf(false) }
     val selected = Formats.byKey(selectedKey)
     Box {
@@ -358,7 +367,7 @@ private fun FormatPicker(selectedKey: String, onSelect: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(selected.label, color = cs.onBackground, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Text("▾", color = cs.primary, fontSize = 16.sp)
+                Text("▾", color = accent, fontSize = 16.sp)
             }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -373,12 +382,47 @@ private fun FormatPicker(selectedKey: String, onSelect: (String) -> Unit) {
 }
 
 @Composable
-private fun PhasePill(text: String) {
+private fun ThemeSwitch() {
     val cs = MaterialTheme.colorScheme
-    Surface(color = cs.primary.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
+    val accent = LocalTennisColors.current.accent
+    val mode by ThemePrefs.mode.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Surface(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(999.dp),
+            color = cs.surfaceVariant,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(modeLabel(mode), color = cs.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.width(5.dp))
+                Text("▾", color = accent, fontSize = 12.sp)
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ThemeMode.entries.forEach { m ->
+                DropdownMenuItem(text = { Text(modeLabel(m)) }, onClick = { ThemePrefs.set(m); expanded = false })
+            }
+        }
+    }
+}
+
+private fun modeLabel(m: ThemeMode): String = when (m) {
+    ThemeMode.LIGHT -> "Light"
+    ThemeMode.DARK -> "Dark"
+    ThemeMode.SYSTEM -> "System"
+}
+
+@Composable
+private fun PhasePill(text: String) {
+    val accent = LocalTennisColors.current.accent
+    Surface(color = accent.copy(alpha = 0.16f), shape = RoundedCornerShape(8.dp)) {
         Text(
             text,
-            color = cs.primary,
+            color = accent,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
